@@ -1,9 +1,0 @@
-{
-  "name": "quazzyblox-ai-v3",
-  "version": "3.0.0",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "openai": "latest"
-  }
-}
