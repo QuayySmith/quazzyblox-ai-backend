@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuazzyBlox.AI — Powered by GPT-5.5 Thinking</title>
+  <style>
+    :root{
+      --bg:#0b0b0f;--side:#111218;--chat:#151720;--user:#6d4aff;
+      --text:#f4f4f6;--muted:#a4a7b7;--border:rgba(255,255,255,.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+    .app{display:grid;grid-template-columns:280px 1fr;height:100vh}
+    aside{background:var(--side);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;padding:10px;font-weight:800;font-size:18px}
+    .brand small{display:block;color:var(--muted);font-size:11px;font-weight:500}
+    .logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#7c3cff,#00d4ff);font-size:14px}
+    button{border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);border-radius:12px;padding:12px;font:inherit;cursor:pointer;text-align:left}
+    button:hover{background:rgba(255,255,255,.1)}
+    .new{background:var(--text);color:#111;font-weight:800;text-align:center}
+    .danger{color:#ff9cad}
+    .section{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin:10px 8px 0}
+    .chat-list{overflow:auto}
+    .chat-list button{width:100%;margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .side-bottom{margin-top:auto;color:var(--muted);font-size:12px;line-height:1.45;padding:10px}
+    main{display:flex;flex-direction:column;height:100vh;background:var(--bg)}
+    .topbar{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(11,11,15,.85);backdrop-filter:blur(14px)}
+    select,input{background:#171923;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:9px 12px;outline:none}
+    .status{color:#35e6a8;font-size:13px}
+    .messages{flex:1;overflow:auto;padding:30px 18px 120px}
+    .wrap{max-width:850px;margin:0 auto}
+    .welcome{text-align:center;margin:70px auto 35px;max-width:700px}
+    .welcome h1{font-size:42px;margin:0 0 10px;letter-spacing:-.05em}
+    .welcome p{color:var(--muted);font-size:16px;line-height:1.5}
+    .suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:25px}
+    .suggestions button{padding:15px;min-height:78px;border-radius:16px}
+    .suggestions b{display:block;margin-bottom:6px}
+    .suggestions span{color:var(--muted);font-size:13px;line-height:1.35}
+    .msg{display:flex;gap:13px;margin:22px 0;align-items:flex-start}
+    .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;font-size:13px;font-weight:800;background:#282b39}
+    .msg.user .avatar{background:var(--user)}
+    .bubble{background:transparent;line-height:1.6;white-space:pre-wrap;max-width:100%}
+    .msg.user .bubble{background:var(--user);padding:12px 15px;border-radius:18px;border-top-left-radius:6px}
+    .composer{position:fixed;left:280px;right:0;bottom:0;padding:18px;background:linear-gradient(180deg,transparent,var(--bg) 28%)}
+    .composer-inner{max-width:850px;margin:0 auto;background:var(--chat);border:1px solid var(--border);border-radius:22px;padding:10px;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+    textarea{width:100%;min-height:58px;max-height:180px;resize:none;background:transparent;border:0;outline:0;color:var(--text);padding:12px;font:inherit;line-height:1.45}
+    .sendbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px 2px}
+    .small{color:var(--muted);font-size:12px}
+    .send{background:var(--text);color:#111;border:0;border-radius:14px;font-weight:800;padding:10px 16px;text-align:center}
+    .settings{display:none;border:1px solid var(--border);border-radius:14px;padding:10px;margin-top:7px}
+    .settings label{display:block;color:var(--muted);font-size:12px;margin:8px 0 5px}
+    .settings input{width:100%}
+    @media(max-width:800px){.app{grid-template-columns:1fr}aside{display:none}.composer{left:0}.welcome h1{font-size:34px}.suggestions{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand"><div class="logo">QB</div><div>QuazzyBlox.AI<small>Powered by GPT-5.5 Thinking</small></div></div>
+      <button class="new" onclick="newChat()">+ New chat</button>
+      <button onclick="toggleSettings()">Backend settings</button>
+      <div class="settings" id="settings">
+        <label>Backend URL</label>
+        <input id="backendUrl" placeholder="https://your-app.vercel.app/api/chat" />
+        <button onclick="saveBackend()">Save backend</button>
+      </div>
+      <div class="section">Saved chats</div>
+      <div class="chat-list" id="chatList"></div>
+      <button onclick="exportChat()">Export current chat</button>
+      <button class="danger" onclick="deleteCurrentChat()">Delete current chat</button>
+      <div class="side-bottom">Chat saving is active on this device using localStorage. Add Firebase later for account-based cloud history.</div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <select id="model">
+          <option value="gpt-5.5">GPT-5.5 Thinking — Roblox Dev</option>
+          <option value="gpt-5.5-mini">GPT-5.5 Fast</option>
+        </select>
+        <div class="status" id="status">Local save ready</div>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="wrap" id="wrap"></div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-inner">
+          <textarea id="input" placeholder="Message QuazzyBlox.AI..."></textarea>
+          <div class="sendbar">
+            <div class="small">Roblox Lua • UI • Scripts • Game systems</div>
+            <button class="send" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+let chats = JSON.parse(localStorage.getItem("quazzyblox_chats") || "[]");
+let currentId = localStorage.getItem("quazzyblox_current") || null;
+let backendUrl = localStorage.getItem("quazzyblox_backend") || "";
+
+const input = document.getElementById("input");
+const wrap = document.getElementById("wrap");
+const statusEl = document.getElementById("status");
+document.getElementById("backendUrl").value = backendUrl;
+
+if(!currentId || !chats.find(c => c.id === currentId)) newChat(false);
+renderChatList();
+renderCurrentChat();
+
+input.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+});
+
+function saveAll(){
+  localStorage.setItem("quazzyblox_chats", JSON.stringify(chats));
+  localStorage.setItem("quazzyblox_current", currentId);
+  renderChatList();
+}
+
+function getCurrent(){
+  return chats.find(c => c.id === currentId);
+}
+
+function newChat(render=true){
+  const chat = {id: crypto.randomUUID(), title:"New chat", createdAt:Date.now(), messages:[]};
+  chats.unshift(chat);
+  currentId = chat.id;
+  saveAll();
+  if(render) renderCurrentChat();
+}
+
+function renderWelcome(){
+  wrap.innerHTML = `
+    <div class="welcome">
+      <h1>What are we building?</h1>
+      <p>Powered by GPT-5.5 Thinking. Ask QuazzyBlox.AI for Roblox scripts, UI, loading screens, map systems, debugging, and setup steps.</p>
+      <div class="suggestions">
+        <button onclick="quick('Make a Roblox loading screen that does not load forever and opens my dashboard after data loads.')"><b>Loading screen</b><span>Safe loading with timeout.</span></button>
+        <button onclick="quick('Make a mobile-friendly Roblox phone dashboard UI with Map, Vehicles, Jobs, Messages, and Settings.')"><b>Phone dashboard UI</b><span>Clean Roblox UI structure.</span></button>
+        <button onclick="quick('Write a Roblox leaderstats cash system with passive income every 5 minutes and 2x gamepass support.')"><b>Cash system</b><span>Server-sided money script.</span></button>
+        <button onclick="quick('Fix this Roblox Lua script and explain what was wrong.')"><b>Debug code</b><span>Paste broken scripts.</span></button>
+      </div>
+    </div>`;
+}
+
+function renderCurrentChat(){
+  const chat = getCurrent();
+  wrap.innerHTML = "";
+  if(!chat || chat.messages.length === 0){ renderWelcome(); return; }
+  chat.messages.forEach(m => addMessageToDOM(m.role, m.content));
+  scrollDown();
+}
+
+function renderChatList(){
+  const list = document.getElementById("chatList");
+  list.innerHTML = "";
+  chats.forEach(chat => {
+    const b = document.createElement("button");
+    b.textContent = chat.title || "New chat";
+    b.onclick = () => { currentId = chat.id; saveAll(); renderCurrentChat(); };
+    list.appendChild(b);
+  });
+}
+
+function addMessageToDOM(role, text){
+  const msg = document.createElement("div");
+  msg.className = "msg " + role;
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = role === "user" ? "You" : "QB";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  wrap.appendChild(msg);
+  return bubble;
+}
+
+function addMessage(role, content){
+  const chat = getCurrent();
+  chat.messages.push({role, content, at:Date.now()});
+  if(role === "user" && chat.title === "New chat") chat.title = content.slice(0,42);
+  saveAll();
+  const bubble = addMessageToDOM(role, content);
+  scrollDown();
+  return bubble;
+}
+
+function updateLastAI(text){
+  const chat = getCurrent();
+  const last = chat.messages[chat.messages.length - 1];
+  if(last && last.role === "ai") last.content = text;
+  saveAll();
+}
+
+function scrollDown(){
+  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+}
+
+async function sendMessage(){
+  const text = input.value.trim();
+  if(!text) return;
+  addMessage("user", text);
+  input.value = "";
+
+  const bubble = addMessage("ai", "");
+  statusEl.textContent = backendUrl ? "Thinking..." : "Demo mode";
+
+  if(backendUrl){
+    try{
+      const chat = getCurrent();
+      const res = await fetch(backendUrl, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:document.getElementById("model").value,
+          messages:chat.messages.slice(-20).map(m => ({
+            role:m.role === "ai" ? "assistant" : "user",
+            content:m.content
+          }))
+        })
+      });
+      const data = await res.json();
+      const reply = data.reply || data.output || "No response returned.";
+      bubble.textContent = reply;
+      updateLastAI(reply);
+      statusEl.textContent = "Powered by GPT-5.5 Thinking";
+      scrollDown();
+      return;
+    }catch(e){
+      const fallback = "Backend failed, so I answered in local demo mode.\n\n" + localReply(text);
+      bubble.textContent = fallback;
+      updateLastAI(fallback);
+      statusEl.textContent = "Backend error";
+      return;
+    }
+  }
+
+  const reply = "Demo mode reply. Add your secure backend URL to make me fully powered by GPT-5.5 Thinking.\n\n" + localReply(text);
+  typeText(bubble, reply, t => updateLastAI(t));
+}
+
+function typeText(el, text, onDone){
+  el.textContent = "";
+  let i = 0;
+  const timer = setInterval(() => {
+    el.textContent += text.charAt(i++);
+    scrollDown();
+    if(i >= text.length){
+      clearInterval(timer);
+      if(onDone) onDone(text);
+    }
+  }, 5);
+}
+
+function localReply(prompt){
+  const p = prompt.toLowerCase();
+  if(p.includes("loading")) return `Use a timeout so your loading screen never freezes:
+1. Show loading UI.
+2. Ask server for player data.
+3. Wait for data or 8 seconds max.
+4. Fade out and open dashboard.
+
+Starter idea:
+- RemoteFunction: LoadPlayerData
+- LocalScript: waits with pcall()
+- Timeout: os.clock() - started > 8`;
+  if(p.includes("ui") || p.includes("phone")) return `Make PhoneGui with PhoneFrame, TopBar, AppGrid, Map, Vehicles, Jobs, Messages, Settings. Use large buttons for mobile and keep app logic in LocalScripts.`;
+  if(p.includes("cash") || p.includes("leaderstats")) return `Put leaderstats in ServerScriptService. Keep cash server-sided. Add passive income using task.spawn loop and later add DataStoreService for saving.`;
+  return `I can help with that Roblox system. For best results, ask for the exact system, where it should go in Roblox Studio, and whether it needs UI, DataStore, or gamepass checks.`;
+}
+
+function quick(text){ input.value = text; sendMessage(); }
+function toggleSettings(){ document.getElementById("settings").style.display = document.getElementById("settings").style.display === "block" ? "none" : "block"; }
+function saveBackend(){ backendUrl = document.getElementById("backendUrl").value.trim(); localStorage.setItem("quazzyblox_backend", backendUrl); statusEl.textContent = backendUrl ? "Backend saved" : "Demo mode"; }
+function deleteCurrentChat(){ chats = chats.filter(c => c.id !== currentId); if(chats.length === 0) newChat(false); else currentId = chats[0].id; saveAll(); renderCurrentChat(); }
+function exportChat(){
+  const chat = getCurrent();
+  const blob = new Blob([JSON.stringify(chat,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "quazzyblox-chat.json";
+  a.click();
+}
+</script>
+</body>
+</html>
